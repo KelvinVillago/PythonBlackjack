@@ -1,4 +1,6 @@
 import random
+
+#global variables that will be used all game
 suits = {'Hearts', 'Diamonds', 'Clubs', 'Spades'}
 ranks = {'King', 'Queen', 'Jack', '10', '9', '8', '7', '6', '5', '4', '3', '2', 'Ace'}
 values = {'2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'Jack':10, 'Queen':10, 'King':10, 'Ace':11}
@@ -56,7 +58,7 @@ class Person:
     def __str__(self):
         output = f"\n{self.name.title()}: "
         for card in self.cards:
-            output += str(card) + ' '
+            output += str(card) + ', '
         output += "Value: " + str(self.value)
         output += '\n'
         return output
@@ -68,7 +70,7 @@ class Dealer(Person):
 
     def displayFirst(self):
         output = f"\n{self.name.title()}: "
-        output += "<hidden> "
+        output += "<hidden>, "
         output += str(self.cards[1])
         output += '\n'
         return output
@@ -89,23 +91,26 @@ def play(deck, hand):
             hand.addCard(deck.deal())
         elif decision == 'stand':
             print("Player has chosen to stand. Dealer's turn. \n")
-            playing = False
+            playing = False #needed to break out of loop. Without it standing option results in infinite loop
         else:
             print('Invalid input. Please try again: ')
             continue
         break
 
 def main():
-    global playing
+    global playing #used to access global var
 
+    #Enter amount to start in table
     startAmt = input("How much would you like to play with: ")
     while not startAmt.isnumeric():
             startAmt = input("Invalid amount")
     startAmt = int(startAmt)
 
     while True:
-        deck = Deck()
+        deck = Deck() #create Deck instance
         deck.shuffle()
+
+        #Handle betting and if there is no more money left
         betAmt = input("How much would you like to bet: ")
         while not betAmt.isnumeric():
             betAmt = input("Invalid bet amount")
@@ -114,6 +119,7 @@ def main():
             print("Sorry, you do not have enough money to play again. \n")
             break
         
+        #Create users
         player = Player('Henry')
         player.addCard(deck.deal())
         player.addCard(deck.deal())
@@ -126,40 +132,51 @@ def main():
         print(dealer.displayFirst())
         print(player)
 
-        while playing:
+        while playing: #Runs true while player does not pick stand option
+            #Doubling down if I understood it correctly
+            double = input("Would you like to double down (y/n)? ")
+            if double == 'y':
+                betAmt *= 2
+                print(f"The bet amount is now ${betAmt}")
+
             play(deck, player) #play the game
             
+            #Print hands of both players
             print(dealer.displayFirst())
             print(player)
-            
-            if(player.value > 21):
-                print('Player Bust. Dealer wins')
+
+            #Check player to end game instantly
+            if player.value == 21:
+                print(f'{player.name.title()} Wins.')
+                startAmt += 2*betAmt
+                break
+            elif(player.value > 21):
+                print(f'{player.name.title()} Bust. {dealer.name.title()} wins')
                 startAmt -= betAmt
                 break
 
-        if player.value <= 21:
+        if player.value < 21: #Other win conditions where dealer has to play the game
             dealer.dealerPlay()
             print(dealer)
             print(player)
 
-            if player.value == 21:
-                print('Player Wins.')
-                startAmt += 2*betAmt
-            elif dealer.value > 21:
-                print('Dealer Bust. Player wins')
+            if dealer.value > 21:
+                print(f'{dealer.name.title()} Bust. {player.name.title()} wins')
                 startAmt += 2*betAmt
             elif player.value > dealer.value:
-                print('Player Wins.')
+                print(f'{player.name.title()} Wins.')
                 startAmt += 2*betAmt
             elif dealer.value == 21:
-                print('Dealer Wins.')
+                print(f'{dealer.name.title()} Wins.')
                 startAmt -= betAmt
             elif player.value < dealer.value:
-                print('Dealer Wins.')
+                print(f'{dealer.name.title()} Wins.')
                 startAmt -= betAmt
             elif player.value == dealer.value:
-                print('Tie. Dealer Wins.')
+                print(f'Tie. {dealer.name.title()} Wins.')
                 startAmt -= betAmt
+
+        #Print finishing text
         print(f"Your balance: ${startAmt}\n")
         toDo = input("\nWould you like to continue playing (y/n): ").lower()
         if toDo == 'y':
